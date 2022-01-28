@@ -37,14 +37,14 @@ public class Epilog extends JavaPlugin {
 	private EventNotifier eventNotifier;
 	private List<Observer> observers;
 	private InventoryTracker inventoryTracker;
-	
+
 	private String statePath = null;
 	private JSONObject state = null;
 	public JSONObject config = null;
-	
+
 	public boolean isLogging = false;
 	public List<String> connectedPlugins = new ArrayList<String>();
-	
+
 	public boolean loggingEnabled = false;
 	public boolean logChats = false;
 	public boolean autoUpdate = false;
@@ -55,27 +55,27 @@ public class Epilog extends JavaPlugin {
 	public boolean offlineMode = true;
 	public boolean debugMode = false;
 	public boolean bukkitMode = false;
-	
+
 	public int logSendPeriod = 10*1000;
 	public int heartbeatSendPeriod = 5*60*1000;
-	
+
 	public String version = "unknown";
 	private static final String serverURL = "https://epilog.heapcraft.net/api/json.php";
 	private static final String serverEvalURL = "https://epilog.heapcraft.net/api/jsonDummy.php";
-	
+
 	public void versionCheck() {
 		String[] v = this.getDescription().getVersion().split("-");
 		this.bukkitMode = v.length>=2 && v[1].equals("bkt");
 	}
-	
+
 	@Override
 	public void onLoad() {
 		this.versionCheck();
 		this.version = this.getDescription().getVersion();
 		this.loadState();
 		eventNotifier = new EventNotifier();
-		remote = new RemoteAPI(this);
-		remote.skippedLogs = this.state.optInt("skippedLogs", 0);
+		// remote = new RemoteAPI(this);
+		// remote.skippedLogs = this.state.optInt("skippedLogs", 0);
 		dataCollector = new DataCollector(this);
 		observers = new ArrayList<Observer>();
 		// load observers (they add themselves)
@@ -89,28 +89,28 @@ public class Epilog extends JavaPlugin {
 		FileConfiguration config = this.getConfig();
 		this.loadConfig(config);
 	}
-	
+
 	public void loadConfig(FileConfiguration config) {
 		JSONObject conf = this.configToJSON(config);
 		if (conf.similar(this.config)) return;
-		boolean initial = this.config==null; 
+		boolean initial = this.config==null;
 		this.config = conf;
 		LogEvent changeEvent = initial ? null : epilogStateEvent("configChange", true);
 		if (changeEvent!=null && this.loggingEnabled && !this.offlineMode) {
-			this.remote.addLogEvent(changeEvent);
+			// this.remote.addLogEvent(changeEvent);
 			changeEvent = null;
 		}
 		this.loadConfig(conf);
 		if (changeEvent!=null) {
 			// maybe we can post now?
-			this.remote.addLogEvent(changeEvent);
+			// this.remote.addLogEvent(changeEvent);
 		}
 	}
-	
+
 	@Override
 	public void onEnable() {
 		// start communication with logging server
-		remote.start();
+		// remote.start();
 		// start event notification thread
 		eventNotifier.start();
 		// register event listener
@@ -121,7 +121,7 @@ public class Epilog extends JavaPlugin {
 		// send onEnable to sub modules
 		inventoryTracker.onEnable();
 	}
-	
+
 	@Override
 	public void onDisable() {
 		// stop listening to events
@@ -129,9 +129,9 @@ public class Epilog extends JavaPlugin {
 		listener = null;
 		// flush cache and stop sending data to logging server
 		// might trigger new events which are ignored
-		remote.stop(); 
-		this.state.put("skippedLogs", remote.skippedLogs);
-		remote = null;
+		// remote.stop();
+		// this.state.put("skippedLogs", remote.skippedLogs);
+		// remote = null;
 		// stop event notification thread
 		if (eventNotifier!=null) {
 			eventNotifier.interrupt();
@@ -146,14 +146,14 @@ public class Epilog extends JavaPlugin {
 		informant = null;
 		this.saveState();
 	}
-	
+
 	public LogEvent epilogStateEvent(String trigger, boolean includeConfig) {
 		LogEvent event = new LogEvent("EpilogState", System.currentTimeMillis(), null);
 		event.data.put("trigger", trigger);
 		event.data.put("onlinePlayers", this.dataCollector.getOnlinePlayers());
 		if (this.config!=null) {
 			boolean loggingEnabled = this.config.getBoolean("loggingEnabled");
-			boolean offlineMode = this.config.getBoolean("offlineMode"); 
+			boolean offlineMode = this.config.getBoolean("offlineMode");
 			// TODO: solve more elegantly
 			boolean canLog = !offlineMode && loggingEnabled;
 			if (this.isLogging!=canLog) {
@@ -167,7 +167,7 @@ public class Epilog extends JavaPlugin {
 		}
 		return event;
 	}
-	
+
 	private void isLoggingDidChange () {
 		String methodName = this.isLogging ? "onLogStart" : "onLogStop";
 		for (String pluginName : this.connectedPlugins) {
@@ -179,9 +179,9 @@ public class Epilog extends JavaPlugin {
 			} catch (Exception e) {}
 		}
 	}
-	
+
 	// functions for external plugins
-	
+
 	public Class<LogEvent> connect(final Plugin plugin) {
 		this.connectedPlugins.add(plugin.getName());
 		if (this.isLogging) {
@@ -194,17 +194,17 @@ public class Epilog extends JavaPlugin {
 		}
 		return LogEvent.class;
 	}
-	
+
 	public void addItemTypeStringProvider(Object obj, Method method) {
 		this.dataCollector.addItemTypeStringProvider(obj, method);
 	}
-	
+
 	// remote api functions
-	
+
 	public void log(JSONObject data) {
-		remote.addLogData(data);
+		// remote.addLogData(data);
 	}
-	
+
 	public void postEvent(String eventName, Player player, Map <String, Object> data, boolean log) {
 		LogEvent event = new LogEvent();
 		event.time = System.currentTimeMillis();
@@ -217,20 +217,20 @@ public class Epilog extends JavaPlugin {
 		event.needsData = false;
 		postEvent(event);
 	}
-	
+
 	public void sendRequest(String cmd, JSONObject info) {
-		RemoteAPI.Request request = this.remote.new Request(cmd, null, null);
-		request.addInfo(info);
-		remote.addRequest(request);
+		// RemoteAPI.Request request = this.remote.new Request(cmd, null, null);
+		// request.addInfo(info);
+		// remote.addRequest(request);
 	}
-	
+
 	// event notification functions
-	
+
 	public boolean postEvent(LogEvent event) {
 		if (eventNotifier==null) return false;
 		return eventNotifier.queue.offer(event);
 	}
-	
+
 	public Class<LogEvent> addEventObserver(Object obj, Method method, Collection<String> eventNames) {
 		Observer observer = new Observer();
 		observer.obj = obj;
@@ -240,7 +240,7 @@ public class Epilog extends JavaPlugin {
 		// give reference to parameter class for reflection
 		return LogEvent.class;
 	}
-	
+
 	public void removeEventObserver(Object obj) {
 		Iterator<Observer> it = observers.iterator();
 		while (it.hasNext()) {
@@ -249,7 +249,7 @@ public class Epilog extends JavaPlugin {
 		    }
 		}
 	}
-	
+
 	private class EventNotifier extends Thread
 	{
 		public BlockingQueue<LogEvent> queue = new LinkedBlockingQueue <LogEvent>();
@@ -274,13 +274,13 @@ public class Epilog extends JavaPlugin {
 					// send event to log server
 					if (!event.ignore) {
 						// needs to count skipped  events
-						remote.addLogEvent(event);
+						// remote.addLogEvent(event);
 					}
 				}
 			}
 		}
 	}
-	
+
 	private class Observer
 	{
 		public Object obj;
@@ -295,9 +295,9 @@ public class Epilog extends JavaPlugin {
 			}
 		}
 	}
-	
+
 	// configuration helpers
-	
+
 	private JSONObject configToJSON(FileConfiguration config) {
 		JSONObject conf = new JSONObject();
 		conf.put("logSendPeriod", config.getInt("log-send-period", 10*1000)); // 10 s
@@ -314,7 +314,7 @@ public class Epilog extends JavaPlugin {
 		conf.put("url", config.getString("logging-server-url", serverURL));
 		return conf;
 	}
-	
+
 	private void loadConfig(JSONObject conf) {
 		this.logSendPeriod = conf.getInt("logSendPeriod");
 		this.heartbeatSendPeriod = conf.getInt("heartbeatSendPeriod");
@@ -331,9 +331,9 @@ public class Epilog extends JavaPlugin {
 		if (this.offlineMode) remoteURL = null;
 		this.remote.setURL(remoteURL);
 	}
-	
+
 	// state functions
-	
+
 	private void loadState() {
 		this.state = null;
 		try {
@@ -345,7 +345,7 @@ public class Epilog extends JavaPlugin {
 			this.state = new JSONObject();
 		}
 	}
-	
+
 	public void saveState() {
 		// write state file
 		try {
@@ -357,7 +357,7 @@ public class Epilog extends JavaPlugin {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private String getStatePath() {
 		if (statePath==null) {
 			File dataFolder = this.getDataFolder();

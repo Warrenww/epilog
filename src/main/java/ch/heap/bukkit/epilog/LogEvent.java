@@ -17,14 +17,14 @@ public class LogEvent {
 	public boolean ignore = false;
 	public boolean needsData = false;
 	public Map <String, Object> data = new HashMap <String, Object>();
-	
+
 	public LogEvent() {};
 	public LogEvent(String name, long time, Player player) {
 		this.eventName = name;
 		this.time = time;
 		this.player = player;
 	}
-	
+
 	public JSONObject toJSON() {
 		JSONObject data = new JSONObject(this.data);
 		Player p = this.player;

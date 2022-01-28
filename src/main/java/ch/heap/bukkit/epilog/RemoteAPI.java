@@ -41,24 +41,24 @@ public class RemoteAPI {
 	private String url = null;
 	private boolean offline = true;
 	private String serverToken = null;
-	
+
 	// 10000 events: about 2.5 MB (250 KB compressed); 1000 player seconds
-	private int logCacheLimit = 100000; // 25 MB; 2.7 player hours
+	private int logCacheLimit = 2700000; // 675 MB; 30 players 2.5 hours
 	// limite sending of large caches; adapts to number of new events
 	private int logSendLimit = 5000;
 	private int previousLogSize = Integer.MAX_VALUE;
 	private boolean logSendRequestPending = false;
 	private ArrayDeque<JSONObject> pendingLogs = new ArrayDeque<JSONObject>();
 	public int skippedLogs = 0;
-	
+
 	private BlockingQueue<JSONObject> logQueue = new LinkedBlockingQueue<JSONObject>();
 	private BlockingQueue<Request> requests = new LinkedBlockingQueue<Request>();
 	private Postman postman = null;
-	
+
 	public RemoteAPI(Epilog plugin) {
 		this.plugin = plugin;
 	}
-	
+
 	public void setURL(String url) {
 		// setting url to null enters offline mode
 		boolean changed = url==null ? this.url!=null : !url.equals(this.url);
@@ -68,7 +68,7 @@ public class RemoteAPI {
 			start();
 		}
 	}
-	
+
 	public void start() {
 		if (!this.offline) return;
 		if (this.url==null) return;
@@ -81,7 +81,7 @@ public class RemoteAPI {
 			postman.start();
 		}
 	}
-	
+
 	public void stop() {
 		if (this.offline) return;
 		if (postman!=null) {
@@ -104,13 +104,13 @@ public class RemoteAPI {
 			}
 		});
 	}
-	
+
 	// heart beats will trigger updates
 	public void triggerHeartBeat() {
 		if (this.postman==null) return;
 		this.postman.sendHeartBeatAt = 0;
 	}
-	
+
 	public void addLogEvent(LogEvent event) {
 		if (!this.offline && plugin.loggingEnabled) {
 			this.logQueue.add(event.toJSON());
@@ -118,7 +118,7 @@ public class RemoteAPI {
 			this.skippedLogs += 1;
 		}
 	}
-	
+
 	public void addLogData(JSONObject data) {
 		if (!this.offline && plugin.loggingEnabled) {
 			this.logQueue.add(data);
@@ -126,19 +126,19 @@ public class RemoteAPI {
 			this.skippedLogs += 1;
 		}
 	}
-	
+
 	public void accessRequest(String email) {
 		final JSONObject data = new JSONObject();
 		String serverID = this.getPrivateServerID();
 		if (serverID==null) return;
     	data.put("epilogServerID", serverID);
     	data.put("email", email);
-    	data.put("serverName", this.plugin.getServer().getServerName());
+    	// data.put("serverName", this.plugin.getServer().getServerName());
 		Request request = new Request("access", data, null);
 		this.addRequest(request);
 		// TODO: add response handler to provide feedback
 	}
-	
+
 	public String getPrivateServerID() {
 		File keyFile = new File(this.plugin.getDataFolder(), "private_server_id");
 		try {
@@ -151,7 +151,7 @@ public class RemoteAPI {
 			return null;
 		}
 	}
-	
+
 	public void setPrivateServerID(String id) {
 		File keyFile = new File(this.plugin.getDataFolder(), "private_server_id");
 		try {
@@ -162,7 +162,7 @@ public class RemoteAPI {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void loadLogCache() {
 		File cacheFile = new File(this.plugin.getDataFolder(), "log_cache.json");
 		if (!cacheFile.exists()) return;
@@ -177,7 +177,7 @@ public class RemoteAPI {
 		} catch (Exception e) {}
 		cacheFile.delete();
 	}
-	
+
 	private void saveLogCache() {
 		if (this.logQueue.size()+this.pendingLogs.size()==0) return;
 		File cacheFile = new File(this.plugin.getDataFolder(), "log_cache.json");
@@ -195,15 +195,15 @@ public class RemoteAPI {
 			e.printStackTrace();
 		}
 	}
-	
+
 	// request stuff
-	
+
 	private void dispatchLogQueue(boolean notifyPlugins) {
 		if (this.logSendRequestPending) return;
 		int n = logQueue.size() + this.pendingLogs.size();
 		if (n==0) return;
 		this.logSendRequestPending = true;
-		
+
 		final int logSize = n;
 		Request request = new Request("log", new RequestDelegate() {
 			@Override public void response(boolean success, JSONObject answer) {
@@ -216,14 +216,14 @@ public class RemoteAPI {
 				logSendRequestPending = false;
 			}
 		});
-		
+
 		int newLogs = logQueue.size() - previousLogSize;
 		if (newLogs>this.logSendLimit) {
 			// queue is growing faster than we are sending
 			this.logSendLimit = newLogs;
 		}
 		previousLogSize = logQueue.size();
-		
+
 		if (logSize>this.logCacheLimit) {
 			// add 1 to include new logSkipEvent
 			final int toSkip = logSize - this.logCacheLimit + 1;
@@ -245,7 +245,7 @@ public class RemoteAPI {
 			this.plugin.postEvent("logSkipEvent", null, data, true);
 			this.plugin.getLogger().warning("log cache is full; skipping " + skipped + " events");
 		}
-		
+
 		if (n>this.logSendLimit) n = this.logSendLimit;
 		while (this.pendingLogs.size()<n) {
 			JSONObject log = this.logQueue.poll();
@@ -253,7 +253,7 @@ public class RemoteAPI {
 			this.pendingLogs.add(log);
 		}
 		previousLogSize = this.logQueue.size();
-		
+
 		if (this.skippedLogs!=0) {
 			request.info.put("skippedLogs", this.skippedLogs);
 		}
@@ -270,7 +270,7 @@ public class RemoteAPI {
 		}
 		this.addRequest(request);
 	}
-	
+
 	public void addRequest(Request request) {
 		if (this.offline) {
 			request.response(false, null);
@@ -278,7 +278,7 @@ public class RemoteAPI {
 			this.requests.add(request);
 		}
 	}
-	
+
 	// executes requester in Postman thread
 	public boolean offerCustomRequest(final Runnable requester) {
 		if (this.offline) return false;
@@ -289,7 +289,7 @@ public class RemoteAPI {
 		addRequest(request);
 		return true;
 	}
-	
+
 	public boolean offerWorlds(String cause, World only) {
 		if (this.offline) return false;
 		LogEvent event = new LogEvent("Worlds", System.currentTimeMillis(), null);
@@ -299,7 +299,7 @@ public class RemoteAPI {
 		sendRequest(request);
 		return true;
 	}
-	
+
 	private void sendRequests(Runnable then) {
 		Request request;
 		while ((request = requests.poll()) != null) {
@@ -310,14 +310,14 @@ public class RemoteAPI {
 			then.run();
 		}
 	}
-	
+
 	private void sendTokenRequest() {
 		LogEvent event = new LogEvent("TokenRequest", System.currentTimeMillis(), null);
 		plugin.dataCollector.addServerMetaData(event);
 		event.data.put("port", this.plugin.getServer().getPort());
 		String id = this.getPrivateServerID();
 		event.data.put("epilogServerID", id);
-		
+
 		Request request = new Request("token", event.toJSON(), new RequestDelegate () {
 			@Override public void response(boolean success, JSONObject answer) {
 				if (answer==null) return;
@@ -342,7 +342,7 @@ public class RemoteAPI {
 		request.requiresServerToken = false;
 		sendRequest(request);
 	}
-	
+
 	private void sendHeartBeat() {
 		JSONObject data = new JSONObject();
 		data.put("time", System.currentTimeMillis());
@@ -356,8 +356,8 @@ public class RemoteAPI {
 		sendRequest(request);
 		this.plugin.updater.heartBeatSent();
 	}
-	
-	// handle events/actions initiated by the server 
+
+	// handle events/actions initiated by the server
 	private void handleRequestResponse(JSONObject answer) {
 		JSONArray events = answer.optJSONArray("events");
 		if (events!=null) {
@@ -375,11 +375,11 @@ public class RemoteAPI {
 			this.plugin.updater.setAvailablePlugins(plugins);
 		}
 	}
-	
+
 	public interface RequestDelegate {
 		public void response(boolean success, JSONObject answer);
 	}
-	
+
 	public class Request {
 		public String cmd = null;
 		public Collection<JSONObject> data = null;
@@ -434,7 +434,7 @@ public class RemoteAPI {
 			}
 		}
 	}
-	
+
 	// thread to send web requests
 	private class Postman extends Thread {
 		public long sendLogsAt = 0;
@@ -467,7 +467,7 @@ public class RemoteAPI {
 			}
 		}
 	}
-	
+
 	static String convertStreamToString(java.io.InputStream is) {
 		java.util.Scanner ss = new java.util.Scanner(is);
 		java.util.Scanner s = ss.useDelimiter("\\A");
@@ -475,9 +475,9 @@ public class RemoteAPI {
 	    ss.close();
 	    return out;
 	}
-	
+
 	// http request stuff
-	
+
 	private SSLSocketFactory sslFactory = null;
 	private SSLSocketFactory getSSLSocketFactory(String path) {
 		if (sslFactory==null) {
@@ -503,7 +503,7 @@ public class RemoteAPI {
 		}
 		return sslFactory;
 	}
-	
+
 	public HttpURLConnection createHttpURLConnection(String url) throws Exception {
 		// uses custom certificate if needed
 		URL obj = new URL(url);
@@ -514,7 +514,7 @@ public class RemoteAPI {
 		}
 		return conn;
 	}
-	
+
 	private void sendRequest(Request request) {
 		//System.out.print("cmd: " + request.cmd);
 		//System.out.print("data: " + request.data);
@@ -549,7 +549,7 @@ public class RemoteAPI {
 			info.put("nLogs", request.data==null ? 0 : request.data.size());
 			conn.setRequestProperty("X-EPILOG-INFO", info.toString());
 			conn.setDoOutput(true);
-			
+
 			GZIPOutputStream out = new GZIPOutputStream(conn.getOutputStream());
 			if (request.data!=null) {
 				for (JSONObject json : request.data) {
@@ -558,12 +558,12 @@ public class RemoteAPI {
 				}
 			}
 			out.close();
-			
+
 			InputStream in = conn.getInputStream();
 			String response = convertStreamToString(in);
 			in.close();
 			conn.disconnect();
-			
+
 			try {
 				answer = new JSONObject(response);
 				handleRequestResponse(answer);
@@ -585,7 +585,7 @@ public class RemoteAPI {
 		}
 		request.response(success, answer);
 	}
-	
+
 	public String get(String url, Map<String, String> reqProp) {
 		String response = null;
 		try {

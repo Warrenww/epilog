@@ -73,6 +73,7 @@ import org.bukkit.event.player.PlayerToggleSprintEvent;
 import org.bukkit.event.player.PlayerUnleashEntityEvent;
 import org.bukkit.event.player.PlayerUnregisterChannelEvent;
 import org.bukkit.event.player.PlayerVelocityEvent;
+import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
@@ -80,7 +81,7 @@ import ch.heap.bukkit.epilog.LogEvent;
 
 public class EventListener implements Listener {
 	public Epilog epilog;
-	
+
 	private void handleEvent(Event event) {
 		//this.logger.plugin.getServer().broadcastMessage(event.getEventName());
 		LogEvent logEvent = new LogEvent();
@@ -93,12 +94,12 @@ public class EventListener implements Listener {
 		logEvent.needsData = true;
 		epilog.postEvent(logEvent);
 	}
-	
+
 	@EventHandler
 	public void onWorldLoad(WorldLoadEvent event) {
 		epilog.remote.offerWorlds(event.getEventName(), event.getWorld());
 	}
-	
+
 	// block events
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent event) {handleEvent(event);}
@@ -260,6 +261,8 @@ public class EventListener implements Listener {
 	public void onPlayerUnregisterChannel(PlayerUnregisterChannelEvent event) {handleEvent(event);}
 	@EventHandler
 	public void onPlayerVelocity(PlayerVelocityEvent event) {handleEvent(event);}
+	@EventHandler
+	public void onPlayerAdvancementDone(PlayerAdvancementDoneEvent event) {handleEvent(event);}
 
 	// world events
 	@EventHandler

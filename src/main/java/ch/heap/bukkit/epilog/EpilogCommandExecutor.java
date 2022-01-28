@@ -14,9 +14,9 @@ import ch.heap.bukkit.epilog.RemoteAPI.RequestDelegate;
 
 public class EpilogCommandExecutor implements CommandExecutor {
 	public Epilog plugin;
-	
-	private HashMap<String, String> booleanConfigs; 
-	
+
+	private HashMap<String, String> booleanConfigs;
+
 	public EpilogCommandExecutor(Epilog plugin) {
 		this.plugin = plugin;
 		booleanConfigs = new HashMap<String, String>();
@@ -29,7 +29,7 @@ public class EpilogCommandExecutor implements CommandExecutor {
 		booleanConfigs.put("loggingInfo", "logging-info");
 		booleanConfigs.put("ingameCommands", "ingame-commands");
 	}
-	
+
 	@Override
 	public boolean onCommand(final CommandSender sender, Command cmd, String label, String[] args) {
 		String c = cmd.getName();
@@ -68,9 +68,10 @@ public class EpilogCommandExecutor implements CommandExecutor {
 			} else if (arg0.equalsIgnoreCase("access")) {
 				if (!permCheck(p, arg0, "epilog.access")) return true;
 				if (arg1.contains("@")) {
-					this.plugin.remote.accessRequest(arg1);
-					sender.sendMessage("admin interface access key has been sent to " + arg1);
-					sender.sendMessage("receiving might take some time; also check your spam folder");
+					// this.plugin.remote.accessRequest(arg1);
+					// sender.sendMessage("admin interface access key has been sent to " + arg1);
+					// sender.sendMessage("receiving might take some time; also check your spam folder");
+					sender.sendMessage("remote api has been disabled");
 				} else {
 					sender.sendMessage("\"" + arg1 + "\" doesn't seem to be a valid email address");
 				}
@@ -84,18 +85,18 @@ public class EpilogCommandExecutor implements CommandExecutor {
 				sender.sendMessage("/el access <email>");
 				sender.sendMessage("more information on http://heapcraft.net/");
 			} else if (arg0.equalsIgnoreCase("ping")) {
-				RemoteAPI remote = this.plugin.remote;
-				final Request request = remote.new Request("ping", null);
-				RequestDelegate delegate = new RequestDelegate() {
-					@Override public void response(boolean success, JSONObject answer) {
-						float dt = System.currentTimeMillis() - request.dispatchTime;
-						String pong = success ? answer.optString("pong", "pong") : "server connection failed";
-						sender.sendMessage(pong + " (time="+(dt/1000)+"s)");
-					}
-				};
-				request.delegate = delegate;
-				request.callDelegateInGameLoop = true;
-				remote.addRequest(request);
+				// RemoteAPI remote = this.plugin.remote;
+				// final Request request = remote.new Request("ping", null);
+				// RequestDelegate delegate = new RequestDelegate() {
+				// 	@Override public void response(boolean success, JSONObject answer) {
+				// 		float dt = System.currentTimeMillis() - request.dispatchTime;
+				// 		String pong = success ? answer.optString("pong", "pong") : "server connection failed";
+				// 		sender.sendMessage(pong + " (time="+(dt/1000)+"s)");
+				// 	}
+				// };
+				// request.delegate = delegate;
+				// request.callDelegateInGameLoop = true;
+				// remote.addRequest(request);
 			} else {
 				return false;
 			}
@@ -103,7 +104,7 @@ public class EpilogCommandExecutor implements CommandExecutor {
 		}
 		return false;
 	}
-	
+
 	private boolean permCheck(Player p, String cmd, String perm) {
 		if (p!=null && !p.hasPermission(perm)) {
 			p.sendMessage("command "+cmd+" requires permission "+perm);

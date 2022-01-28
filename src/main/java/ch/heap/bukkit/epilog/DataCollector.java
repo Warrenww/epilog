@@ -45,6 +45,8 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
+import org.bukkit.event.player.PlayerAdvancementDoneEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -55,13 +57,13 @@ import org.json.JSONObject;
 
 public class DataCollector {
 	Epilog epilog = null;
-	
+
 	public ArrayList<ItemTypeStringProvider> itemTypeStringProviders = new ArrayList<ItemTypeStringProvider>();
-	
+
 	public DataCollector(Epilog epilog) {
 		this.epilog = epilog;
 	}
-	
+
 	public void addData(LogEvent logEvent) {
 		logEvent.needsData = false;
 		// check if event is valid
@@ -97,11 +99,11 @@ public class DataCollector {
 			return;
 		}
 	}
-	
+
 	public void addItemTypeStringProvider(Object obj, Method method) {
 		this.itemTypeStringProviders.add(new ItemTypeStringProvider(obj, method));
 	}
-	
+
 	public String itemTypeString(ItemStack item) {
 		String ans = null;
 		for (ItemTypeStringProvider sp : this.itemTypeStringProviders) {
@@ -116,7 +118,7 @@ public class DataCollector {
 		// TODO: potion effects
 		return ans;
 	}
-	
+
 	private static void addMovementData(LogEvent logEvent, PlayerMoveEvent event) {
 		logEvent.player = event.getPlayer();
 		Map <String, Object> data = logEvent.data;
@@ -127,7 +129,7 @@ public class DataCollector {
 		data.put("pitch", loc.getPitch());
 		data.put("yaw", loc.getYaw());
 	}
-	
+
 	private static void addDamageData(LogEvent logEvent, EntityEvent event) {
 		Map <String, Object> data = logEvent.data;
 		Entity e1 = event.getEntity();
@@ -136,12 +138,12 @@ public class DataCollector {
 			health = ((LivingEntity)e1).getHealth() / ((LivingEntity)e1).getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
 			data.put("health", health);
 		}
-		
+
 		boolean e1IsPlayer = e1 instanceof Player;
 		if (e1IsPlayer) {
 			logEvent.player = (Player)e1;
 		}
-		
+
 		if (event instanceof EntityRegainHealthEvent) {
 			logEvent.eventName = "PlayerRegainHealthEvent";
 			EntityRegainHealthEvent ehe = (EntityRegainHealthEvent)event;
@@ -149,12 +151,12 @@ public class DataCollector {
 			data.put("cause", ehe.getRegainReason().name());
 			return;
 		}
-		
+
 		EntityDamageEvent ede = (EntityDamageEvent)event;
 		data.put("damage", ede.getDamage());
-		
+
 		Block block = null;
-		
+
 		data.put("cause", ede.getCause().name());
 		if (event instanceof EntityDamageByEntityEvent) {
 			EntityDamageByEntityEvent evt = (EntityDamageByEntityEvent) event;
@@ -201,10 +203,10 @@ public class DataCollector {
 	    	data.put("blockZ", block.getZ());
 		}
 	}
-	
+
 	private void addGenericData(LogEvent logEvent, Event event) {
 		Map <String, Object> data = logEvent.data;
-		
+
 		Player player = null;
 		Object entity = null;
 		Block block = null;
@@ -212,7 +214,7 @@ public class DataCollector {
 		BlockFace blockFace = null;
 		ItemStack itemStack = null;
 		boolean doIntrospection = false;
-		
+
 		// figure out what kind of data we can get
 		if (event instanceof PlayerToggleFlightEvent) {
 			data.put("var", ((PlayerToggleFlightEvent)event).isFlying()?1:0);
@@ -249,6 +251,7 @@ public class DataCollector {
 		} else if (event instanceof ProjectileLaunchEvent) {
 			Projectile projectile = ((ProjectileLaunchEvent)event).getEntity();
 			data.put("enum", projectile.getType().name());
+			data.put("itemName", projectile.getCustomName());
 			ProjectileSource shooter = projectile.getShooter();
 			if (shooter instanceof Entity) entity = shooter;
 			doIntrospection = true;
@@ -256,6 +259,12 @@ public class DataCollector {
 			entity = ((InventoryInteractEvent)event).getWhoClicked();
 			doIntrospection = true;
 			logEvent.ignore = true; // don't send to server
+		} else if (event instanceof PlayerAdvancementDoneEvent) {
+				String adv = ((PlayerAdvancementDoneEvent) event).getAdvancement().getKey().getKey();
+				data.put("advancement", adv);
+		} else if (event instanceof PlayerInteractEntityEvent) {
+			Entity e2 = ((PlayerInteractEntityEvent) event).getRightClicked();
+			data.put("entityName", e2.getCustomName());
 		} else {
 			doIntrospection = true;
 			for (Method method : event.getClass().getMethods()){
@@ -282,7 +291,7 @@ public class DataCollector {
 			    }
 			}
 		}
-		
+
 		if (doIntrospection==false) {
 			try {
 				entity = (Player) event.getClass().getMethod("getPlayer", (Class<?>[]) null).invoke(event);
@@ -291,7 +300,7 @@ public class DataCollector {
 				entity = event.getClass().getMethod("getEntity", (Class<?>[]) null).invoke(event);
 			} catch (Exception e) {}
 		}
-		
+
 		// fill out generic data fields
 	    if (block!=null) {
 	    	data.put("blockX", block.getX());
@@ -323,23 +332,23 @@ public class DataCollector {
 //	    	System.out.println(event.getEventName() + ": " + material.name());
 //	    }
 	}
-	
+
 	public JSONArray getOnlinePlayers() {
 		return playerArray(this.epilog.getServer().getOnlinePlayers());
 	}
-	
+
 	// collect server data
 	public void addServerMetaData(LogEvent logEvent) {
 		Server server = this.epilog.getServer();
 		JSONObject data = new JSONObject();
-		
-		// get loaded plugins 
+
+		// get loaded plugins
 		JSONArray plugins = new JSONArray();
 		for (Plugin plugin : server.getPluginManager().getPlugins()) {
 			plugins.put(getPluginMetaData(plugin));
 		}
 		data.put("plugins", plugins);
-		
+
 		// collect some more possibly usefull properties
 		data.put("name", server.getName()); // String
 		data.put("version", server.getVersion()); // String
@@ -348,8 +357,8 @@ public class DataCollector {
 		data.put("port", server.getPort()); // int
 		data.put("viewDistance", server.getViewDistance()); // int
 		data.put("ip", server.getIp()); // String
-		data.put("serverName", server.getServerName()); // String
-		data.put("serverId", server.getServerId()); // String
+		// data.put("serverName", server.getServerName()); // String
+		// data.put("serverId", server.getServerId()); // String
 		data.put("worldType", server.getWorldType()); // String
 		data.put("generateStructures", server.getGenerateStructures() ? 1 : 0); // boolean
 		data.put("allowEnd", server.getAllowEnd() ? 1 : 0); // boolean
@@ -361,14 +370,14 @@ public class DataCollector {
 		data.put("spawnRadius", server.getSpawnRadius()); // int
 		data.put("onlineMode", server.getOnlineMode() ? 1 : 0); // boolean
 		data.put("allowFlight", server.getAllowFlight() ? 1 : 0); // boolean
-		
+
 		data.put("ipBans", server.getIPBans()); // Set<String>
 		data.put("bannedPlayers", playerArray(server.getBannedPlayers())); // Set<OfflinePlayer>
 		data.put("operators", playerArray(server.getOperators())); // Set<OfflinePlayer>
-		
+
 		logEvent.data.put("serverMeta", data);
 	}
-	
+
 	private static JSONObject getPluginMetaData(Plugin plugin) {
 		JSONObject data = new JSONObject();
 		PluginDescriptionFile desc = plugin.getDescription();
@@ -379,7 +388,7 @@ public class DataCollector {
 		}
 		return data;
 	}
-	
+
 	public JSONObject getWorlds(World only) {
 		Server server = this.epilog.getServer();
 		JSONObject worlds = new JSONObject();
@@ -389,10 +398,10 @@ public class DataCollector {
 		}
 		return worlds;
 	}
-	
+
 	private static JSONObject getWorldMetaData(World world) {
 		JSONObject data = new JSONObject();
-		
+
 		// collect some more possibly usefull properties
 //		data.put("entities", world.getEntities()); // List<Entity>
 //		data.put("livingEntities", world.getLivingEntities()); // List<LivingEntity>
@@ -418,7 +427,7 @@ public class DataCollector {
 		data.put("worldType", world.getWorldType().name()); // WorldType
 		data.put("ticksPerAnimalSpawns", world.getTicksPerAnimalSpawns()); // long
 		data.put("ticksPerMonsterSpawns", world.getTicksPerMonsterSpawns()); // long
-		
+
 		data.put("uuid", world.getUID().toString()); // string
 		JSONObject spawnLocation = new JSONObject();
 		Location loc = world.getSpawnLocation();
@@ -428,10 +437,10 @@ public class DataCollector {
 		spawnLocation.put("pitch", loc.getPitch());
 		spawnLocation.put("yaw", loc.getYaw());
 		data.put("spawnLocation", spawnLocation);
-		
+
 		return data;
 	}
-	
+
 	private static JSONArray playerArray(Collection<? extends OfflinePlayer> playerSet) {
 		JSONArray result = new JSONArray();
 		for (OfflinePlayer p : playerSet) {
@@ -439,7 +448,7 @@ public class DataCollector {
 		}
 		return result;
 	}
-	
+
 	private class ItemTypeStringProvider {
 		private Object obj;
 		private Method method;
