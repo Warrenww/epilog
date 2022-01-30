@@ -199,8 +199,8 @@ public class DataCollector {
 			if (e1IsPlayer) logEvent.eventName = "PlayerDamageByBlockEvent";
 			data.put("material", block.getType().name());
 			data.put("blockX", block.getX());
-	    	data.put("blockY", block.getY());
-	    	data.put("blockZ", block.getZ());
+    	data.put("blockY", block.getY());
+    	data.put("blockZ", block.getZ());
 		}
 	}
 
@@ -260,11 +260,15 @@ public class DataCollector {
 			doIntrospection = true;
 			logEvent.ignore = true; // don't send to server
 		} else if (event instanceof PlayerAdvancementDoneEvent) {
-				String adv = ((PlayerAdvancementDoneEvent) event).getAdvancement().getKey().getKey();
+				String advNameSpace = ((PlayerAdvancementDoneEvent) event).getAdvancement().getKey().getNamespace();
+				String advKey = ((PlayerAdvancementDoneEvent) event).getAdvancement().getKey().getKey();
+				String adv = advNameSpace + ":" + advKey;
+
 				data.put("advancement", adv);
 		} else if (event instanceof PlayerInteractEntityEvent) {
 			Entity e2 = ((PlayerInteractEntityEvent) event).getRightClicked();
-			data.put("entityName", e2.getCustomName());
+			data.put("entity", e2.getCustomName());
+			data.put("enum", ((PlayerInteractEntityEvent)event).getHand().name());
 		} else {
 			doIntrospection = true;
 			for (Method method : event.getClass().getMethods()){

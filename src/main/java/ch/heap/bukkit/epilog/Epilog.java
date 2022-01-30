@@ -27,6 +27,7 @@ import org.json.JSONTokener;
 
 import ch.heap.bukkit.epilog.LogEvent;
 import ch.heap.bukkit.epilog.EpilogCommandExecutor;
+import ch.heap.bukkit.epilog.MySQLDatabase;
 
 public class Epilog extends JavaPlugin {
 	public RemoteAPI remote;
@@ -312,6 +313,14 @@ public class Epilog extends JavaPlugin {
 		conf.put("offlineMode", config.getBoolean("offline-mode", false));
 		conf.put("debugMode", config.getBoolean("debug-mode", false));
 		conf.put("url", config.getString("logging-server-url", serverURL));
+
+		conf.put("useMySQL", config.getBoolean("enable-database", false));
+		conf.put("host", config.getString("host", "localhost"));
+		conf.put("port", config.getInt("port", 3306));
+		conf.put("databse", config.getString("databse", "database"));
+		conf.put("username", config.getString("username", "username"));
+		conf.put("password", config.getString("password", "password"));
+		conf.put("prefix", config.getString("table-prefix", ""));
 		return conf;
 	}
 
@@ -329,7 +338,19 @@ public class Epilog extends JavaPlugin {
 		this.debugMode = conf.getBoolean("debugMode");
 		String remoteURL = this.useEvaluationServer ? serverEvalURL : conf.getString("url");
 		if (this.offlineMode) remoteURL = null;
-		this.remote.setURL(remoteURL);
+
+		if (conf.getBoolean("useMySQL")) {
+			String host = conf.getString("host");
+			int port = conf.getInt("port");
+			String database = conf.getString("database");
+			String username = conf.getString("username");
+			String password = conf.getString("password");
+			String prefix = conf.getString("prefix");
+			MySQLDatabase mysql = new MySQLDatabase(host, port, database, username, password, prefix);
+			mysql.connect();
+			mysql.getService().createTable();
+		}
+
 	}
 
 	// state functions
