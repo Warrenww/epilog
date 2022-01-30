@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.sql.SQLException;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -38,6 +39,7 @@ public class Epilog extends JavaPlugin {
 	private EventNotifier eventNotifier;
 	private List<Observer> observers;
 	private InventoryTracker inventoryTracker;
+	private MySQLDatabase database;
 
 	private String statePath = null;
 	private JSONObject state = null;
@@ -273,9 +275,13 @@ public class Epilog extends JavaPlugin {
 						it.next().post(event);
 					}
 					// send event to log server
-					if (!event.ignore) {
+					if (!event.ignore && database != null) {
 						// needs to count skipped  events
-						// remote.addLogEvent(event);
+						try {
+							database.getService().addRecord(event.toJSON());
+						} catch (SQLException e) {
+							return;
+						}
 					}
 				}
 			}
@@ -317,7 +323,7 @@ public class Epilog extends JavaPlugin {
 		conf.put("useMySQL", config.getBoolean("enable-database", false));
 		conf.put("host", config.getString("host", "localhost"));
 		conf.put("port", config.getInt("port", 3306));
-		conf.put("databse", config.getString("databse", "database"));
+		conf.put("database", config.getString("database", "database"));
 		conf.put("username", config.getString("username", "username"));
 		conf.put("password", config.getString("password", "password"));
 		conf.put("prefix", config.getString("table-prefix", ""));
@@ -346,9 +352,9 @@ public class Epilog extends JavaPlugin {
 			String username = conf.getString("username");
 			String password = conf.getString("password");
 			String prefix = conf.getString("prefix");
-			MySQLDatabase mysql = new MySQLDatabase(host, port, database, username, password, prefix);
-			mysql.connect();
-			mysql.getService().createTable();
+			this.database = new MySQLDatabase(host, port, database, username, password, prefix);
+			this.database.connect();
+			this.database.getService().createTable();
 		}
 
 	}

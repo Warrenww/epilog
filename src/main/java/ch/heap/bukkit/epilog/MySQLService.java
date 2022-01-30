@@ -53,13 +53,15 @@ public class MySQLService extends DatabaseService {
 			"`enum` varchar(255)," +
 			"`cmd` varchar(255)," +
 			"`itemName` varchar(255)," +
-			"`blockFace` varchar(255)" +
+			"`blockFace` varchar(255)," +
+			"`delta` varchar(255)," +
+			"`content` varchar(255)" +
 			")");
 
 	}
 
 
-		// String time,
+		// long time,
 		// String event,
 		// String player,
 		// String worldUUID,
@@ -84,65 +86,70 @@ public class MySQLService extends DatabaseService {
 		// String cmd,
 		// String itemName,
 		// String blockFace,
-		//
+		// String delta : HashMap -> JSONObject -> String
+		// String content : HashMap -> JSONObject -> String
 	@Override
 	public void addRecord(JSONObject data) throws SQLException {
 		PreparedStatement pst = database.getConnection().prepareStatement(
 			"INSERT INTO " +
 			this.table +
 			"(" +
-			"time" +
-			"event" +
-			"player" +
-			"worldUUID" +
-			"msg" +
-			"x" +
-			"y" +
-			"z" +
-			"pitch" +
-			"yaw" +
-			"health" +
-			"damage" +
-			"cause" +
-			"projectile" +
-			"entityID" +
-			"entity" +
-			"material" +
-			"blockX" +
-			"blockY" +
-			"blockZ" +
-			"var" +
-			"enum" +
-			"cmd" +
-			"itemName" +
-			"blockFace" +
-			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+			"time," +
+			"event," +
+			"player," +
+			"worldUUID," +
+			"msg," +
+			"x," +
+			"y," +
+			"z," +
+			"pitch," +
+			"yaw," +
+			"health," +
+			"damage," +
+			"cause," +
+			"projectile," +
+			"entityID," +
+			"entity," +
+			"material," +
+			"blockX," +
+			"blockY," +
+			"blockZ," +
+			"var," +
+			"enum," +
+			"cmd," +
+			"itemName," +
+			"blockFace," +
+			"delta," +
+			"content" +
+			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 		);
-		pst.setString(1, data.getString("time"));
-		pst.setString(2, data.getString("event"));
-		pst.setString(3, data.getString("player"));
-		pst.setString(4, data.getString("worldUUID"));
-		pst.setString(5, data.getString("msg"));
-		pst.setDouble(6, data.getDouble("x"));
-		pst.setDouble(7, data.getDouble("y"));
-		pst.setDouble(8, data.getDouble("z"));
-		pst.setDouble(9, data.getDouble("pitch"));
-		pst.setDouble(10, data.getDouble("yaw"));
-		pst.setDouble(11, data.getDouble("health"));
-		pst.setDouble(12, data.getDouble("damage"));
-		pst.setString(13, data.getString("cause"));
-		pst.setString(14, data.getString("projectile"));
-		pst.setString(15, data.getString("entityID"));
-		pst.setString(16, data.getString("entity"));
-		pst.setString(17, data.getString("material"));
-		pst.setInt(18, data.getInt("blockX"));
-		pst.setInt(19, data.getInt("blockY"));
-		pst.setInt(20, data.getInt("blockZ"));
-		pst.setInt(21, data.getInt("var"));
-		pst.setString(22, data.getString("enum"));
-		pst.setString(23, data.getString("cmd"));
-		pst.setString(24, data.getString("itemName"));
-		pst.setString(25, data.getString("blockFace"));
+		pst.setString(1, Long.toString(data.getLong("time")));
+		pst.setString(2, data.optString("event", null));
+		pst.setString(3, data.optString("player", null));
+		pst.setString(4, data.optString("worldUUID", null));
+		pst.setString(5, data.optString("msg", null));
+		pst.setObject(6, data.isNull("x") ? null : data.getDouble("x"));
+		pst.setObject(7, data.isNull("y") ? null : data.getDouble("y"));
+		pst.setObject(8, data.isNull("z") ? null : data.getDouble("z"));
+		pst.setObject(9, data.isNull("pitch") ? null : data.getDouble("pitch"));
+		pst.setObject(10, data.isNull("yaw") ? null : data.getDouble("yaw"));
+		pst.setObject(11, data.isNull("health") ? null : data.getDouble("health"));
+		pst.setObject(12, data.isNull("damage") ? null : data.getDouble("damage"));
+		pst.setString(13, data.optString("cause", null));
+		pst.setString(14, data.optString("projectile", null));
+		pst.setString(15, data.optString("entityID", null));
+		pst.setString(16, data.optString("entity", null));
+		pst.setString(17, data.optString("material", null));
+		pst.setObject(18, data.isNull("blockX") ? null : data.getInt("blockX"));
+		pst.setObject(19, data.isNull("blockY") ? null : data.getInt("blockY"));
+		pst.setObject(20, data.isNull("blockZ") ? null : data.getInt("blockZ"));
+		pst.setObject(21, data.isNull("var") ? null : data.getInt("var"));
+		pst.setString(22, data.optString("enum", null));
+		pst.setString(23, data.optString("cmd", null));
+		pst.setString(24, data.optString("itemName", null));
+		pst.setString(25, data.optString("blockFace", null));
+		pst.setString(26, data.isNull("delta") ? null : data.getJSONObject("delta").toString());
+		pst.setString(27, data.isNull("content") ? null : data.getJSONObject("content").toString());
 
 		pool.execute(new Runnable() {
 
