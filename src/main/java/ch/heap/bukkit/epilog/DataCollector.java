@@ -47,7 +47,11 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.inventory.InventoryEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.projectiles.BlockProjectileSource;
@@ -110,7 +114,7 @@ public class DataCollector {
 			ans = sp.stringForItem(item);
 			if (ans!=null) return ans;
 		}
-		ans = item.getType().toString();
+		ans = item.getType().name();
 		Map<Enchantment, Integer> enchantments = item.getEnchantments();
 		for (Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
 			ans += ":" + entry.getKey().getName() + "." + entry.getValue();
@@ -267,8 +271,13 @@ public class DataCollector {
 				data.put("advancement", adv);
 		} else if (event instanceof PlayerInteractEntityEvent) {
 			Entity e2 = ((PlayerInteractEntityEvent) event).getRightClicked();
-			data.put("entity", e2.getCustomName());
+			String name = e2.getCustomName();
+			data.put("entityID", e2.getUniqueId());
+			data.put("entity", name != null ? name : e2.getType().name());
 			data.put("enum", ((PlayerInteractEntityEvent)event).getHand().name());
+		} else if (event instanceof InventoryOpenEvent || event instanceof InventoryCloseEvent) {
+			Inventory inventory = ((InventoryEvent) event).getInventory();
+			data.put("enum", inventory.getType().name());
 		} else {
 			doIntrospection = true;
 			for (Method method : event.getClass().getMethods()){
@@ -332,9 +341,6 @@ public class DataCollector {
 	    } else if (entity instanceof Player) {
 	    	logEvent.player = (Player) entity;
 	    }
-//	    if (material!=null) {
-//	    	System.out.println(event.getEventName() + ": " + material.name());
-//	    }
 	}
 
 	public JSONArray getOnlinePlayers() {
@@ -361,8 +367,6 @@ public class DataCollector {
 		data.put("port", server.getPort()); // int
 		data.put("viewDistance", server.getViewDistance()); // int
 		data.put("ip", server.getIp()); // String
-		// data.put("serverName", server.getServerName()); // String
-		// data.put("serverId", server.getServerId()); // String
 		data.put("worldType", server.getWorldType()); // String
 		data.put("generateStructures", server.getGenerateStructures() ? 1 : 0); // boolean
 		data.put("allowEnd", server.getAllowEnd() ? 1 : 0); // boolean

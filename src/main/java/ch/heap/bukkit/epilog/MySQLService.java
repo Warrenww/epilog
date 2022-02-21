@@ -55,7 +55,8 @@ public class MySQLService extends DatabaseService {
 			"`itemName` varchar(255)," +
 			"`blockFace` varchar(255)," +
 			"`delta` varchar(255)," +
-			"`content` varchar(255)" +
+			"`content` varchar(511)," +
+			"`advancement` varchar(255)" +
 			")");
 
 	}
@@ -88,6 +89,7 @@ public class MySQLService extends DatabaseService {
 		// String blockFace,
 		// String delta : HashMap -> JSONObject -> String
 		// String content : HashMap -> JSONObject -> String
+		// String advancement
 	@Override
 	public void addRecord(JSONObject data) throws SQLException {
 		PreparedStatement pst = database.getConnection().prepareStatement(
@@ -120,8 +122,9 @@ public class MySQLService extends DatabaseService {
 			"itemName," +
 			"blockFace," +
 			"delta," +
-			"content" +
-			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+			"content," +
+			"advancement" +
+			") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 		);
 		pst.setString(1, Long.toString(data.getLong("time")));
 		pst.setString(2, data.optString("event", null));
@@ -150,6 +153,7 @@ public class MySQLService extends DatabaseService {
 		pst.setString(25, data.optString("blockFace", null));
 		pst.setString(26, data.isNull("delta") ? null : data.getJSONObject("delta").toString());
 		pst.setString(27, data.isNull("content") ? null : data.getJSONObject("content").toString());
+		pst.setString(28, data.optString("advancement"));
 
 		pool.execute(new Runnable() {
 

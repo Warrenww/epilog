@@ -36,7 +36,7 @@ public class InventoryTracker {
 	private Map<UUID, InventoryContent> playerEnderChest = new HashMap <UUID, InventoryContent>();
 	private Map<Location, InventoryContent> chestInventory = new HashMap <Location, InventoryContent>();
 	private Map<UUID, Map<Location, InventoryContent>> chestInventoryBuffer = new HashMap <UUID, Map<Location, InventoryContent>>();
-	
+
 	public InventoryTracker(Epilog el) {
 		epilog = el;
 		try {
@@ -91,7 +91,7 @@ public class InventoryTracker {
 		checkInventory("ArmorContent", p, time, this.playerArmor, p.getInventory().getArmorContents());
 		checkInventory("EnderChestContent", p, time, this.playerEnderChest, p.getEnderChest().getContents());
 	}
-	
+
 	public void chestHandler(LogEvent event) {
 		Player p = event.player;
 		if (p==null) return;
@@ -113,7 +113,7 @@ public class InventoryTracker {
 			flushChestInventoryBuffer(event.player, event.time);
 		}
 	}
-	
+
 	private void checkItemInHand(Player p, long time) {
 		// DEBUG: is latency enough to give new item? use getNewSlot()
 		ItemStack item = p.getInventory().getItemInMainHand();
@@ -128,7 +128,7 @@ public class InventoryTracker {
 			// System.out.println("PlayerItemInHandEvent: "+itemType);
 		}
 	}
-	
+
 	private void checkInventory(String eventName, Player player, long time, Map<UUID, InventoryContent> state, ItemStack[] content) {
 		UUID uid = player.getUniqueId();
 		InventoryContent previous = state.get(uid);
@@ -148,7 +148,7 @@ public class InventoryTracker {
 		epilog.postEvent(logEvent);
 		state.put(uid, current);
 	}
-	
+
 	private void checkChest(Location location, Player player, long time, ItemStack[] content) {
 		InventoryContent previous = this.chestInventory.get(location);
 		InventoryContent current = new InventoryContent(content);
@@ -198,7 +198,7 @@ public class InventoryTracker {
 		}
 		chestInventoryBuffer.remove(player.getUniqueId());
 	}
-	
+
 	private void checkChest(InventoryHolder ih, Player player, long time) {
 		if (ih instanceof BlockState) {
 			Block block = ((BlockState)ih).getBlock();
@@ -213,7 +213,7 @@ public class InventoryTracker {
 			checkChest(((Chest)inv2.getHolder()).getLocation(), player, time, inv2.getContents());
 		}
 	}
-	
+
 	private InventoryContent getChestInventoryBuffer(UUID uid, Location location) {
 		if (!chestInventoryBuffer.containsKey(uid)) {
 			chestInventoryBuffer.put(uid, new HashMap<Location, InventoryContent>());
@@ -223,10 +223,10 @@ public class InventoryTracker {
 		}
 		return chestInventoryBuffer.get(uid).get(location);
 	}
-	
+
 	private class InventoryContent {
 		private Map<String, Integer> amount;
-		
+
 		public InventoryContent() {
 			amount = new HashMap<String, Integer>();
 		}
@@ -267,6 +267,6 @@ public class InventoryTracker {
 					this.amount.put(key, n1+n2);
 				}
 			}
-		} 
+		}
 	}
 }
