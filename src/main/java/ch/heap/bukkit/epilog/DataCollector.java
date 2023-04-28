@@ -27,6 +27,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.entity.EntityAirChangeEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
@@ -240,9 +241,14 @@ public class DataCollector {
 			PlayerExpChangeEvent pexcEvent = (PlayerExpChangeEvent) event;
 			data.put("var", pexcEvent.getAmount()+pexcEvent.getPlayer().getTotalExperience());
 		} else if (event instanceof PlayerInteractEvent) {
-			blockFace = ((PlayerInteractEvent)event).getBlockFace();
-			block = ((PlayerInteractEvent)event).getClickedBlock();
-			data.put("enum", ((PlayerInteractEvent)event).getAction().name());
+			PlayerInteractEvent e = (PlayerInteractEvent) event;
+			blockFace = e.getBlockFace();
+			block = e.getClickedBlock();
+			data.put("enum", e.getAction().name());
+			if (e.hasItem()) {
+				ItemStack temp = e.getItem();
+				data.put("itemName", this.itemTypeString(temp));
+			}
 		} else if (event instanceof FurnaceExtractEvent) {
 			material = ((FurnaceExtractEvent)event).getItemType();
 			block = ((FurnaceExtractEvent)event).getBlock();
@@ -286,7 +292,14 @@ public class DataCollector {
 		} else if (event instanceof InventoryOpenEvent || event instanceof InventoryCloseEvent) {
 			Inventory inventory = ((InventoryEvent) event).getInventory();
 			data.put("enum", inventory.getType().name());
-		} else {
+		} else if (event instanceof EntityAirChangeEvent) {
+			EntityAirChangeEvent e = (EntityAirChangeEvent) event;
+			Entity e2 = e.getEntity();
+			String name = e2.getCustomName();
+			data.put("entityID", e2.getUniqueId());
+			data.put("entity", name != null ? name : e2.getType().name());
+			data.put("var", e.getAmount());
+ 		} else {
 			doIntrospection = true;
 			for (Method method : event.getClass().getMethods()){
 				String methodName = method.getName();

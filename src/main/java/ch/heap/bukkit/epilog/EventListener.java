@@ -1,5 +1,8 @@
 package ch.heap.bukkit.epilog;
 
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,6 +27,7 @@ import org.bukkit.event.entity.EntityPortalExitEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 // import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.EntityAirChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PlayerLeashEntityEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
@@ -77,6 +81,7 @@ import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 
+
 import ch.heap.bukkit.epilog.LogEvent;
 
 public class EventListener implements Listener {
@@ -125,14 +130,14 @@ public class EventListener implements Listener {
 	public void onEntityCombust(EntityCombustEvent event) {handleEvent(event);}
 	@EventHandler
 	public void onEntityCreatePortal(EntityCreatePortalEvent event) {handleEvent(event);}
-	@EventHandler
-	public void onEntityDamageByBlock(EntityDamageByBlockEvent event) {handleEvent(event);}
-	@EventHandler
-	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {handleEvent(event);}
-	@EventHandler
-	public void onEntityDamage(EntityDamageEvent event) {handleEvent(event);}
-	@EventHandler
-	public void onEntityDeath(EntityDeathEvent event) {handleEvent(event);}
+	// @EventHandler
+	// public void onEntityDamageByBlock(EntityDamageByBlockEvent event) {handleEvent(event);}
+	// @EventHandler
+	// public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {handleEvent(event);}
+	// @EventHandler
+	// public void onEntityDamage(EntityDamageEvent event) {handleEvent(event);}
+	// @EventHandler
+	// public void onEntityDeath(EntityDeathEvent event) {handleEvent(event);}
 //	@EventHandler
 //	public void onEntityExplode(EntityExplodeEvent event) {handleEvent(event);}
 	@EventHandler
@@ -146,6 +151,8 @@ public class EventListener implements Listener {
 	@EventHandler
 	public void onEntityRegainHealth(EntityRegainHealthEvent event) {handleEvent(event);}
 	@EventHandler
+	// public void onEntityAirChange(EntityAirChangeEvent event) {handleEvent(event);}
+	// @EventHandler
 	public void onEntityShootBow(EntityShootBowEvent event) {handleEvent(event);}
 	// @EventHandler
 	// public void onEntityTame(EntityTameEvent event) {handleEvent(event);}
@@ -218,7 +225,16 @@ public class EventListener implements Listener {
 	@EventHandler
 	public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {handleEvent(event);}
 	@EventHandler
-	public void onPlayerInteract(PlayerInteractEvent event) {handleEvent(event);}
+	public void onPlayerInteract(PlayerInteractEvent event) {
+		Player p = event.getPlayer();
+		if (p.getInventory().getItemInHand().getType() == Material.WRITTEN_BOOK) {
+				if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+					epilog.postEvent("PlayerOpenBookEvent", p, null, true);
+					
+				}
+		}
+		handleEvent(event);
+	}
 	@EventHandler
 	public void onPlayerItemBreak(PlayerItemBreakEvent event) {handleEvent(event);}
 	@EventHandler
