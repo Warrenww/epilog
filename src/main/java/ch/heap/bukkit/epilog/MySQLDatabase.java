@@ -25,7 +25,7 @@ public class MySQLDatabase extends Database {
 
 	@Override
 	public String getDataSourceName() {
-		return String.format("jdbc:mysql://%s:%d/%s?useSSL=false&characterEncoding=latin1", this.host, this.port, this.database);
+		return String.format("jdbc:mysql://%s:%d/%s?useSSL=false&useUnicode=true&characterEncoding=utf8", this.host, this.port, this.database);
 	}
 
 	@Override

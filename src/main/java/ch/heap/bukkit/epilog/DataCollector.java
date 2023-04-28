@@ -56,6 +56,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.projectiles.BlockProjectileSource;
 import org.bukkit.projectiles.ProjectileSource;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -115,6 +116,13 @@ public class DataCollector {
 			if (ans!=null) return ans;
 		}
 		ans = item.getType().name();
+		if (item.hasItemMeta()) {
+			ItemMeta meta = item.getItemMeta();
+			if (meta.hasDisplayName()) {
+				String customName = meta.getDisplayName();
+				ans += ":" + customName;
+			}
+		}
 		Map<Enchantment, Integer> enchantments = item.getEnchantments();
 		for (Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
 			ans += ":" + entry.getKey().getName() + "." + entry.getValue();
@@ -247,7 +255,7 @@ public class DataCollector {
 			data.put("var", ((FoodLevelChangeEvent)event).getFoodLevel());
 		} else if (event instanceof PlayerCommandPreprocessEvent) {
 			String cmd = ((PlayerCommandPreprocessEvent)event).getMessage();
-			data.put("cmd", cmd.split(" ", 2)[0]);
+			data.put("cmd", cmd);
 		} else if (event instanceof CraftItemEvent) {
 			itemStack = ((CraftItemEvent)event).getRecipe().getResult();
 			entity = ((CraftItemEvent)event).getWhoClicked();

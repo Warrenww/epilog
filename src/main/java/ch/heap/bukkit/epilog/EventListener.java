@@ -23,7 +23,7 @@ import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.EntityPortalExitEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
+// import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PlayerLeashEntityEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
@@ -147,10 +147,10 @@ public class EventListener implements Listener {
 	public void onEntityRegainHealth(EntityRegainHealthEvent event) {handleEvent(event);}
 	@EventHandler
 	public void onEntityShootBow(EntityShootBowEvent event) {handleEvent(event);}
-//	@EventHandler
-//	public void onEntityTame(EntityTameEvent event) {handleEvent(event);}
-	@EventHandler
-	public void onFoodLevelChange(FoodLevelChangeEvent event) {handleEvent(event);}
+	// @EventHandler
+	// public void onEntityTame(EntityTameEvent event) {handleEvent(event);}
+	// @EventHandler
+	// public void onFoodLevelChange(FoodLevelChangeEvent event) {handleEvent(event);}
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent event) {handleEvent(event);}
 	@EventHandler
