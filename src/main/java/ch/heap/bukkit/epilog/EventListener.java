@@ -1,5 +1,8 @@
 package ch.heap.bukkit.epilog;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
@@ -229,6 +232,8 @@ public class EventListener implements Listener {
 		Player p = event.getPlayer();
 		if (p.getInventory().getItemInHand().getType() == Material.WRITTEN_BOOK) {
 				if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+					Map <String, Object> data = new HashMap <String, Object>();
+					data.put("itemName", epilog.dataCollector.itemTypeString(p.getInventory().getItemInHand()));
 					epilog.postEvent("PlayerOpenBookEvent", p, null, true);
 					
 				}
